@@ -55,6 +55,63 @@ steps_by_interval[steps_by_interval$steps==max(steps_by_interval$steps),]$interv
 
 ## Imputing missing values
 
+Total missing values
 
+```r
+sum(is.na(activities$steps))
+```
+
+```
+## [1] 2304
+```
+
+Fill missing values in the dataset with the mean for that 5-minute interval
+
+```r
+merged = merge(activities, steps_by_interval, by="interval", suffixes=c(".orig", ".mean"))
+activities$steps = ifelse(is.na(merged$steps.orig), merged$steps.mean, merged$steps.orig)
+```
+
+Histograms of total steps per day after imputing missing values
+
+```r
+by_day<-group_by(activities, date)
+steps_by_day<-summarize(by_day, steps = sum(steps))
+hist(steps_by_day$steps, main = 'histogram of steps per day', xlab = 'steps')
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+
+```r
+mean(steps_by_day$steps, na.rm = T)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
+median(steps_by_day$steps, na.rm = T)
+```
+
+```
+## [1] 10351.62
+```
+
+The mean and median are very close to the original estimates with the missing values.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
+```r
+activities$wday<-weekdays(as.Date(activities$date))
+activities$wday<-ifelse( activities$wday %in% c("Saturday", "Sunday"), "Weekend", "Weekday" )
+by_interval_wday<-group_by(activities, interval, wday)
+steps_by_interval<-summarize(by_interval_wday, steps = mean(steps, na.rm = T))
+library(lattice)
+xyplot(steps~interval | factor(wday), data=steps_by_interval, type="l", layout=c(1,2))
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+
+There seems to be more activities on weekends.
